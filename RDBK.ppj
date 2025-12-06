@@ -1,0 +1,50 @@
+<?xml version='1.0'?><!-- Game is either sse, tesv, or fo4 -->
+<PapyrusProject xmlns="PapyrusProject.xsd" 
+    Flags="TESV_Papyrus_Flags.flg" 
+    Game="sse" 
+    Output="Scripts" 
+    Optimize="true" 
+    Anonymize="true" 
+    Zip="true">
+    <Variables>
+        <Variable Name="ModName" Value="Realistic Dark Brotherhood Kidnapping"/>
+        <Variable Name="ThisProject" Value="."/>
+        <Variable Name="patches" Value=".\patches"/>
+        <Variable Name="Rel" Value=".\.releases"/>
+        <Variable Name="MO2" Value=".."/>
+        <Variable Name="Ver" Value="1.1.0"/>
+    </Variables>
+    <Imports>
+        <Import>@ThisProject\Source\Scripts</Import>
+        <Import>@MO2\Creation Kit\Source\Scripts</Import>
+        <!-- Ressources -->
+        <Import>@MO2\JContainers SE\Source\Scripts</Import>
+        <!-- Base Game -->
+        <Import>C:\Program Files (x86)\Steam\steamapps\common\Skyrim Special Edition\Data\Source\Scripts</Import>
+    </Imports>
+    <Folders>
+        <Folder>@ThisProject\Source\Scripts</Folder>
+    </Folders>
+    <ZipFiles Output="@Rel">
+        <ZipFile Name="@ModName @Ver - Config" RootDir="@ThisProject" Compression="deflate">
+            <Include>SKSE</Include>
+            <Include>Scripts</Include>
+            <Include>Source</Include>
+        </ZipFile>
+        <ZipFile Name="@ModName @Ver - Location" RootDir="@ThisProject" Compression="deflate">
+            <Include Path="SKSE\RDBK">Presets\LocationOnly</Include>
+            <Include>Scripts</Include>
+            <Include>Source</Include>
+        </ZipFile>
+        <ZipFile Name="@ModName @Ver - Time" RootDir="@ThisProject" Compression="deflate">
+            <Include Path="SKSE\RDBK">Presets\TimeOnly</Include>
+            <Include>Scripts</Include>
+            <Include>Source</Include>
+        </ZipFile>
+        <ZipFile Name="@ModName @Ver - Time and Location" RootDir="@ThisProject" Compression="deflate">
+            <Include Path="SKSE\RDBK">Presets\TimeLocation</Include>
+            <Include>Scripts</Include>
+            <Include>Source</Include>
+        </ZipFile>
+    </ZipFiles>
+</PapyrusProject>

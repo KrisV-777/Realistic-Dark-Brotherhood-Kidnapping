@@ -12,69 +12,57 @@ ImageSpaceModifier Property Woozy Auto
 ; When stage is set to 30, register for sleep via RegisterForSleep()
 
 Event OnSleepStart(float afSleepStartTime, float afDesiredSleepEndTime)
-; SCRAB EDIT ----------------------
+	; RDBK --- EDIT START ------------------
 	Actor Player = Game.GetPlayer()
-	; ----------------- Time
-	; Location PlayerLoc = Player.GetCurrentLocation()
-	; ; Debug.Trace("Location = " + PlayerLoc)
-	; If(PlayerLoc)
-	; 	Keyword LocTypeInn = Game.GetForm(0x1CB87) as Keyword
-	; 	Keyword LocTypeCity = Game.GetForm(0x13168) as Keyword
-	; 	Keyword LocTypeTown = Game.GetForm(0x13166) as Keyword
-	; 	Keyword LocTypePlayerHouse = Game.GetForm(0xFC1A3) as Keyword
-	; 	; Debug.Trace("LocTypeInn = " + LocTypeInn + "LocTypeCity = " + LocTypeCity + "LocTypeTown = " + LocTypeTown + "LocTypePlayerHouse = " + LocTypePlayerHouse)
-	; 	If(PlayerLoc.HasKeyword(LocTypeInn) || PlayerLoc.HasKeyword(LocTypeCity) || PlayerLoc.HasKeyword(LocTypeTown) || PlayerLoc.HasKeyword(LocTypePlayerHouse))
-	; 		If IsTimeRestricted()
-	; 			; Debug.Trace("Sleeping in a filtered Location mid day")
-	; 			return
-	; 		EndIf
-	; 	EndIf
-	; EndIf
-	; ; ----------------- Location
-	; If(!InNearbyHold())
-	; 	return
-	; EndIf
-; JCONTAINER CODE -----------------
 	int config = JValue.ReadFromFile("Data\\SKSE\\RDBK\\Settings.json")
 	If(!config)
-		Debug.MessageBox("-- Realistic Dark Brotherhood Kidnapping --\nYou use the Config Version but JContainers is not installed OR \"Settings.json\" is not present in \"Data\\SKSE\\RDBK\\\"\n\nKidnappings will be disabled until this issue is resolved.")
+		String msg = "-- Realistic Dark Brotherhood Kidnapping --\n"
+		msg += "Unable to parse configuration file in Data\\SKSE\\RDBK\\Settings.json.\n"
+		msg += "Make sure the file exists and you have a working installation of JContainers.\n\n"
+		msg += "Kidnappings will be disabled until this issue is resolved."
+		Debug.MessageBox(msg)
 		return
 	EndIf
-	If(JMap.getInt(config, "RestrictHolds", 0) && !InNearbyHold())
+	If(JMap.getInt(config, "RestrictHolds", 0) && !RDBK_InNearbyHold())
 		return
-	ElseIf(IsProtected(config))
+	ElseIf(RDBK_IsProtected(config))
 		return
-	EndIf
-	If(Player.IsInInterior())
+	ElseIf(Player.IsInInterior())
 		int interior = JMAp.getObj(config, "Interior", 0)
-		If(!interior || !JMap.getInt(interior, "Enabled", 0))
+		If(!interior)
+			Debug.Trace("[RDBK] No interior config found")
 			return
-		ElseIf(!InReqLoc(interior))
+		ElseIf(!JMap.getInt(interior, "Enabled", 0))
 			return
-		ElseIf(JMap.getInt(interior, "RestrictTime", 0) && IsTimeRestricted())
+		ElseIf(!RDBK_InReqLoc(interior))
+			return
+		ElseIf(JMap.getInt(interior, "RestrictTime", 0) && RDBK_IsTimeRestricted())
 			return
 		EndIf
 	Else
 		int exterior = JMap.GetObj(config, "Exterior", 0)
-		If(!exterior || !JMap.getInt(exterior, "Enabled", 0))
+		If (!exterior)
+			Debug.Trace("[RDBK] No exterior config found")
 			return
-		ElseIf(!Player.GetCurrentLocation() && !JMap.getInt(exterior, "Wilderness", 0))
+		ElseIf(!JMap.getInt(exterior, "Enabled", 0))
 			return
-		ElseIf(JMap.getInt(exterior, "RestrictTime", 0) && IsTimeRestricted())
+		ElseIf(!Player.GetCurrentLocation() && !JMap.getInt(exterior, "AllowWilderness", 0))
+			return
+		ElseIf(JMap.getInt(exterior, "RestrictTime", 0) && RDBK_IsTimeRestricted())
 			return
 		EndIf
 	EndIf
-; SCRAB EDIT END ------------------
+	; RDBK --- EDIT END ------------------
 
-; For the player sleeping, to move him to the shack to be forcegreeted by Astrid.
-If pSleepyTime == 1
+	; For the player sleeping, to move him to the shack to be forcegreeted by Astrid.
+	If pSleepyTime == 1
 		Game.DisablePlayerControls(ablooking = true, abCamSwitch = true)
-	  Game.ForceFirstPerson()
+		Game.ForceFirstPerson()
 		Game.GetPlayer().MoveTo(pPlayerShackMarker)
 		Woozy.Apply()
 		Game.GetPlayer().PlayIdle(WakeUp)
 
-		; JCONTAINER CODE PART 2 ----------
+		; RDBK --- EDIT PART 2 ------------------
 		GlobalVariable GameHour = Game.GetForm(0x38) as GlobalVariable
 		ObjectReference chest = Game.GetForm(0xCE2A7) as ObjectReference
 		float skiptime = JMap.GetFlt(config, "SkipTime", 0)
@@ -84,39 +72,37 @@ If pSleepyTime == 1
 		If(JMap.getObj(config, "StealInventory", 0))
 			Player.RemoveAllItems(chest, true)
 		EndIf
-		; SCRAB EDIT END ------------------
+		; RDBK --- EDIT END ------------------
 
 		Utility.Wait (3)
 		pSleepyTime = 3
-endif
+	endif
 
-
-
-;Tempted in for future, when sleeping is working
-;If the player is sleeping
-	;play the sleeping/wake up animation
-	;in previous block, set pSleepyTime to 2, and use 2 in this block to have the player play the wakeup animnation, then set to 3 to have Astrid forcegreet
-;endif
-
-; For the player sleeping the second time, and being greeted by Astrid (commented out because it's no longer used)
-
-;If pPlayerSecondSleep == 0
-	;If pSleepyTime >= 5
-			;pSleepyTime = 6
-			;pAstridAlias.GetReference().Moveto (Game.GetPlayer(), afXOffset = 60.0)
-			;pPlayerSecondSleep = 1
+	;Tempted in for future, when sleeping is working
+	;If the player is sleeping
+		;play the sleeping/wake up animation
+		;in previous block, set pSleepyTime to 2, and use 2 in this block to have the player play the wakeup animnation, then set to 3 to have Astrid forcegreet
 	;endif
-;endif
+
+	; For the player sleeping the second time, and being greeted by Astrid (commented out because it's no longer used)
+
+	;If pPlayerSecondSleep == 0
+		;If pSleepyTime >= 5
+				;pSleepyTime = 6
+				;pAstridAlias.GetReference().Moveto (Game.GetPlayer(), afXOffset = 60.0)
+				;pPlayerSecondSleep = 1
+		;endif
+	;endif
 EndEvent
 
-bool Function IsTimeRestricted()
+bool Function RDBK_IsTimeRestricted()
 	float gametime = Utility.GetCurrentGameTime()
 	float hour = gametime - (gametime as int)
 	; Debug.Trace("GameTime = " + gametime + " hour = " + hour)
 	return hour < 0.92 && hour > 0.21 ; 0.92 ~ 22.00 // 0.21 ~ 5.00
 EndFunction
 
-bool Function InNearbyHold()
+bool Function RDBK_InNearbyHold()
 	Location HjaalmachHold = Game.GetForm(0x1676E) as Location
 	Location PaleHold = Game.GetForm(0x1676D) as Location
 	Location HaafingarHold = Game.GetForm(0x16770) as Location
@@ -124,27 +110,31 @@ bool Function InNearbyHold()
 	return HjaalmachHold.IsLoaded() || PaleHold.IsLoaded() || HaafingarHold.IsLoaded()
 EndFunction
 
-bool Function InReqLoc(int interior)
+bool Function RDBK_InReqLoc(int interior)
 	Location pLoc = Game.GetPlayer().GetCurrentLocation()
-	If(pLoc)
-		int kw = JMap.getObj(interior, "RequireKeywords", 0)
-		If(kw)
-			String[] keywordIDs = JArray.asStringArray(kw)
-			int i = 0
-			While(i < keywordIDs.length)
-				Keyword k = Keyword.GetKeyword(keywordIDs[i])
-				If(k && pLoc.HasKeyword(k))
-					return true
-				EndIf
-				i += 1
-			EndWhile
-			return false
-		EndIf
+	If(!pLoc)
+		return true
 	EndIf
-	return true
+	int keywordObj = JMap.getObj(interior, "RequireKeywords", 0)
+	If(!keywordObj)
+		return true
+	EndIf
+	String[] keywordIDs = JArray.asStringArray(keywordObj)
+	IF (keywordIDs.length == 0)
+		return true
+	EndIf
+	int i = 0
+	While(i < keywordIDs.length)
+		Keyword k = Keyword.GetKeyword(keywordIDs[i])
+		If(k && pLoc.HasKeyword(k))
+			return true
+		EndIf
+		i += 1
+	EndWhile
+	return false
 EndFunction
 
-bool Function IsProtected(int config)
+bool Function RDBK_IsProtected(int config)
 	int protecc = JMap.getObj(config, "AbductionProtection", 0)
 	If(!protecc)
 		return false
@@ -157,11 +147,11 @@ bool Function IsProtected(int config)
 	int pOther = JMap.getInt(protecc, "Other")
 	Cell c = Game.GetPlayer().GetParentCell()
 	int n = c.GetNumRefs(62)
-	Debug.Trace("[RDBK] Found " + n + " Actors in Cell")
+	; Debug.Trace("[RDBK] Found " + n + " Actors in Cell")
 	While(n > 0)
 		n -= 1
 		Actor ref = c.GetNthRef(n, 62) as Actor
-		Debug.Trace("Checking " + ref)
+		; Debug.Trace("[RDBK] Checking " + ref)
 		If(pFol && ref.IsPlayerTeammate())
 			return true
 		ElseIf(pHousecarl && ref.IsInFaction(HousecarlFac))

@@ -1,0 +1,21 @@
+{
+    "SkipTime": 0.0,
+    "StealInventory": false,
+    "RestrictHolds": true,
+    "Interior": {
+        "Enable": true,
+        "RequireKeywords": [],
+        "RestrictTime": false
+    },
+    "Exterior": {
+        "Enable": true,
+        "AllowWilderness": true,
+        "RestrictTime": false
+    },
+    "AbductionProtection": {
+        "Followers": false,
+        "Housecarl": false,
+        "Spouse": false,
+        "Other": false
+    }
+}
